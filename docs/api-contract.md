@@ -38,6 +38,8 @@ Every error — validation, authorization, rate limiting, upstream — uses one 
 | `IDEMPOTENCY_CONFLICT` | 409 | The key was already used with a different payload |
 | `IDEMPOTENCY_IN_PROGRESS` | 409 | The first request with this key is still running; retry shortly |
 | `UNAUTHORIZED` | 401 | Missing or invalid session |
+| `TOKEN_EXPIRED` | 401 | Session token has expired (or is inside the near-expiry margin) — re-authenticate via SEP-10; `details.hint` spells out the challenge → sign → verify exchange |
+| `INVALID_TOKEN` | 401 | Session token is malformed, wrongly signed, or missing required claims — it cannot be refreshed, only re-obtained by authenticating again |
 | `FORBIDDEN` | 403 | Authenticated, but not permitted on this resource |
 | `NOT_FOUND` | 404 | The resource does not exist |
 | `RATE_LIMITED` | 429 | Per-route budget exhausted; `details.retryAfterSeconds` when available |

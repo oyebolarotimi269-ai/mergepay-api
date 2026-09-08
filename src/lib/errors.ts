@@ -78,6 +78,21 @@ export const ErrorCode = {
   INVALID_CURSOR: "INVALID_CURSOR",
   // 401
   UNAUTHORIZED: "UNAUTHORIZED",
+  /**
+   * The presented session token is well-formed but its `exp` has passed (or
+   * falls inside the near-expiry margin). The remedy is to re-authenticate:
+   * run the SEP-10 challenge/verify exchange for a fresh token. Kept distinct
+   * from INVALID_TOKEN so a client can silently refresh instead of surfacing
+   * an error to the user. See src/plugins/auth.ts.
+   */
+  TOKEN_EXPIRED: "TOKEN_EXPIRED",
+  /**
+   * The presented session token is unusable: malformed envelope, wrong
+   * signature, wrong issuer/audience/algorithm, or missing required claims.
+   * The credential cannot be refreshed — it must be re-obtained by
+   * authenticating again.
+   */
+  INVALID_TOKEN: "INVALID_TOKEN",
   // 403
   FORBIDDEN: "FORBIDDEN",
   // 404
@@ -145,6 +160,22 @@ export class AppError extends Error {
 export const Errors = {
   unauthorized: (msg = "Authentication required") =>
     new AppError(401, ErrorCode.UNAUTHORIZED, msg),
+
+  /**
+   * 401 for an expired session token. The `details` payload carries the
+   * re-authentication hint so a client can recover on its own instead of
+   * treating the expiry as a hard failure.
+   */
+  tokenExpired: (msg = "Token expired") =>
+    new AppError(401, ErrorCode.TOKEN_EXPIRED, msg, {
+      reauthenticate: "sep10",
+      hint:
+        "Session token has expired. Re-authenticate via SEP-10 to obtain a new one: POST /auth/challenge, sign the returned transaction with your wallet, then POST /auth/verify.",
+    }),
+
+  /** 401 for an unusable session token (malformed, wrongly signed, bad claims). */
+  invalidToken: (msg = "Invalid token") =>
+    new AppError(401, ErrorCode.INVALID_TOKEN, msg),
 
   forbidden: (msg = "You do not have access to this resource") =>
     new AppError(403, ErrorCode.FORBIDDEN, msg),
